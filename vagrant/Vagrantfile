@@ -1,0 +1,63 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+dir = File.dirname(__FILE__)
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://atlas.hashicorp.com/search.
+  config.vm.box = 'johansyd/centos-7'
+  config.vm.box_url = 'johansyd/centos-7'
+  config.ssh.private_key_path = dir + '/ssh/insecure_private_key'
+  config.ssh.forward_agent = true
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
+
+  config.vm.define 'mysql.vagrant.domain.com' do |machine|
+    machine.vm.hostname = 'mysql.vagrant.domain.com'
+    machine.vm.network  'private_network', ip:"192.168.77.23"
+    #machine.vm.network 'forwarded_port', guest: 3306, host: 33600
+    machine.vm.synced_folder dir + '/../scripts/mysql.vagrant.domain.com', '/home/vagrant/scripts'
+
+    machine.vm.provision :shell, :path => "scripts/install-puppet.sh"
+    machine.vm.provision 'puppet' do |puppet|
+      puppet.module_path = dir + '/../puppet/modules'
+      puppet.manifests_path = dir + '/../puppet/manifests/nodes'
+      puppet.manifest_file = 'mysql.vagrant.domain.com.pp'
+    end
+    machine.vm.provision :shell, :path => "../scripts/mysql.vagrant.domain.com/install.sh", :privileged  => false
+    machine.vm.provider :virtualbox do |vb|
+      vb.customize ['modifyvm', :id, '--memory', '512']
+      vb.name = 'mysql.vagrant.domain.com'
+      # vb.gui = true
+    end
+  end
+
+  config.vm.define 'vhost.vagrant.domain.com' do |machine|
+    machine.vm.hostname = 'vhost.vagrant.domain.com'
+    machine.vm.network  'private_network', ip:"192.168.77.22"
+    machine.vm.synced_folder dir + '/../scripts/vhost.vagrant.domain.com', '/home/vagrant/scripts'
+
+    machine.vm.provision :shell, :path => "scripts/install-puppet.sh"
+    machine.vm.provision 'puppet' do |puppet|
+      puppet.module_path = dir + '/../puppet/modules'
+      puppet.manifests_path = dir + '/../puppet/manifests/nodes'
+      puppet.manifest_file = 'vhost.vagrant.domain.com.pp'
+    end
+    machine.vm.provision :shell, :path => "../scripts/vhost.vagrant.domain.com/install.sh", :privileged  => false
+    machine.vm.synced_folder dir + '/../vhosts/vhost.vagrant.domain.com', "/var/www/vhost.vagrant.domain.com/active", id: 'vagrant-admin', :owner => 'vagrant', :group => "vagrant",  mount_options: ["uid=1000", "gid=1000"]
+    machine.vm.provider :virtualbox do |vb|
+      vb.customize ['modifyvm', :id, '--memory', '512']
+      vb.name = 'vhost.vagrant.domain.com'
+      # vb.gui = true
+    end
+  end
+
+end
