@@ -1,0 +1,11 @@
+{
+    "projects": [
+		{
+	    	"name": "vagrant.domain.com",
+			"vcs": "git",
+			"url": "git@github.com:johansyd/vagrant.domain.com.git",
+			"path": "vhosts/vhost.vagrant.domain.com",
+			"install": "scripts/install.sh"
+		}
+    ]
+}
