@@ -7,5 +7,9 @@
 			"path": "vhosts/vhost.vagrant.domain.com",
 			"install": "scripts/install.sh"
 		}
+    ],
+    "vagrant_plugins": [
+    	"vagrant-vbguest",
+		"vagrant-hostmanager"
     ]
 }
